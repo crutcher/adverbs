@@ -23,8 +23,52 @@ TEST(scoped_device_list, iterators) {
   }
 
   i = 0;
-  for (auto& dev : device_list) {
+  for (auto dev : device_list) {
     EXPECT_EQ(dev->node_type, ref_device_list[i]->node_type);
     ++i;
+  }
+}
+
+TEST(scoped_device_list, lookup_by_name) {
+  adverbs::scoped_device_list device_list;
+
+  EXPECT_EQ(nullptr, device_list.lookup_by_name("nonexistent"));
+
+  for (auto& dev : device_list) {
+    EXPECT_EQ(dev, device_list.lookup_by_name(dev->name));
+    EXPECT_EQ(dev, device_list.lookup_by_name(std::string(dev->name)));
+  }
+
+  for (auto& dev : device_list) {
+    adverbs::device_handle device_handle(dev);
+  }
+}
+
+TEST(scoped_device_list, lookup_by_kernel_index) {
+  adverbs::scoped_device_list device_list;
+
+  EXPECT_EQ(nullptr, device_list.lookup_by_kernel_index(13370));
+
+  for (auto& dev : device_list) {
+    EXPECT_EQ(
+        dev, device_list.lookup_by_kernel_index(ibv_get_device_index(dev)));
+  }
+}
+
+TEST(device_handle, attributes) {
+  adverbs::scoped_device_list device_list;
+
+  for (auto& dev : device_list) {
+    adverbs::device_handle device_handle(dev);
+    adverbs::device_handle copy = device_handle;
+
+    auto attr = copy.query_device_attr();
+    EXPECT_GT(attr.max_mr_size, 0);
+
+    auto ports = copy.query_ports();
+
+    auto ib_ports = copy.query_ports([](const auto& port) {
+      return port.link_layer == IBV_LINK_LAYER_INFINIBAND;
+    });
   }
 }
