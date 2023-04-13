@@ -1,9 +1,10 @@
 #include "adverbs.h"
 
-namespace adverbs {
+#include <infiniband/verbs.h>
 
-    int basic(int x) {
-        return x * 2;
-    }
+#include <iostream>
+#include <memory>
+#include <ostream>
+#include <vector>
 
-} // namespace adverbs
+using namespace adverbs;
