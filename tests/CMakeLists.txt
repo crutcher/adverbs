@@ -1,5 +1,9 @@
 project(tests)
 
+# Work around for DOWNLOAD_EXTRACT_TIMESTAMP error.
+if (POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif ()
 # =========================================
 # Pull gtest at configure time.
 # See: https://github.com/google/googletest/blob/main/googletest/README.md
@@ -19,6 +23,9 @@ FetchContent_MakeAvailable(googletest)
 # > add_test(NAME example_test COMMAND example)
 # =========================================
 
-add_executable(tests_run BasicTest.cpp)
-target_link_libraries(tests_run gtest_main)
-target_link_libraries(tests_run adverbs_lib)
+add_executable(testsuite BasicTest.cpp)
+target_link_libraries(testsuite gtest_main)
+target_link_libraries(testsuite adverbs_lib)
+
+# ??
+# add_test(NAME testsuite COMMAND example)
