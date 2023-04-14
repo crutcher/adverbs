@@ -5,6 +5,10 @@
 
 #include "adverbs.h"
 
+#ifndef IBV_PORT_LINK_SPEED_NDR_SUP
+#define IBV_PORT_LINK_SPEED_NDR_SUP ((enum ibv_port_cap_flags2)(1 << 10))
+#endif
+
 namespace nb = nanobind;
 using namespace nb::literals;
 
@@ -30,9 +34,7 @@ std::string format(const std::string& format, Args... args) {
   // actually format
   std::snprintf(buf.get(), size, format.c_str(), args...);
 
-  // Build the return string.
-  // We don't want the '\0' inside
-  return std::string(buf.get(), buf.get() + size - 1);
+  return buf.get();
 
 #pragma GCC diagnostic pop
 }
@@ -159,6 +161,41 @@ NB_MODULE(_py_adverbs, m) {
       .value("IBV_TRANSPORT_USNIC_UDP", IBV_TRANSPORT_USNIC_UDP)
       .export_values();
 
+  nb::enum_<ibv_device_cap_flags>(m, "IBV_DEVICE_CAP_FLAGS")
+      .value("IBV_DEVICE_RESIZE_MAX_WR", IBV_DEVICE_RESIZE_MAX_WR)
+      .value("IBV_DEVICE_BAD_PKEY_CNTR", IBV_DEVICE_BAD_PKEY_CNTR)
+      .value("IBV_DEVICE_BAD_QKEY_CNTR", IBV_DEVICE_BAD_QKEY_CNTR)
+      .value("IBV_DEVICE_RAW_MULTI", IBV_DEVICE_RAW_MULTI)
+      .value("IBV_DEVICE_AUTO_PATH_MIG", IBV_DEVICE_AUTO_PATH_MIG)
+      .value("IBV_DEVICE_CHANGE_PHY_PORT", IBV_DEVICE_CHANGE_PHY_PORT)
+      .value("IBV_DEVICE_UD_AV_PORT_ENFORCE", IBV_DEVICE_UD_AV_PORT_ENFORCE)
+      .value("IBV_DEVICE_CURR_QP_STATE_MOD", IBV_DEVICE_CURR_QP_STATE_MOD)
+      .value("IBV_DEVICE_SHUTDOWN_PORT", IBV_DEVICE_SHUTDOWN_PORT)
+      .value("IBV_DEVICE_INIT_TYPE", IBV_DEVICE_INIT_TYPE)
+      .value("IBV_DEVICE_PORT_ACTIVE_EVENT", IBV_DEVICE_PORT_ACTIVE_EVENT)
+      .value("IBV_DEVICE_SYS_IMAGE_GUID", IBV_DEVICE_SYS_IMAGE_GUID)
+      .value("IBV_DEVICE_RC_RNR_NAK_GEN", IBV_DEVICE_RC_RNR_NAK_GEN)
+      .value("IBV_DEVICE_SRQ_RESIZE", IBV_DEVICE_SRQ_RESIZE)
+      .value("IBV_DEVICE_N_NOTIFY_CQ", IBV_DEVICE_N_NOTIFY_CQ)
+      .value("IBV_DEVICE_MEM_WINDOW", IBV_DEVICE_MEM_WINDOW)
+      .value("IBV_DEVICE_UD_IP_CSUM", IBV_DEVICE_UD_IP_CSUM)
+      .value("IBV_DEVICE_XRC", IBV_DEVICE_XRC)
+      .value("IBV_DEVICE_MEM_MGT_EXTENSIONS", IBV_DEVICE_MEM_MGT_EXTENSIONS)
+      .value("IBV_DEVICE_MEM_WINDOW_TYPE_2A", IBV_DEVICE_MEM_WINDOW_TYPE_2A)
+      .value("IBV_DEVICE_MEM_WINDOW_TYPE_2B", IBV_DEVICE_MEM_WINDOW_TYPE_2B)
+      .value("IBV_DEVICE_RC_IP_CSUM", IBV_DEVICE_RC_IP_CSUM)
+      .value("IBV_DEVICE_RAW_IP_CSUM", IBV_DEVICE_RAW_IP_CSUM)
+      .value(
+          "IBV_DEVICE_MANAGED_FLOW_STEERING",
+          IBV_DEVICE_MANAGED_FLOW_STEERING)
+      .export_values();
+
+  nb::enum_<ibv_fork_status>(m, "IBV_FORK_STATUS")
+      .value("IBV_FORK_DISABLED", IBV_FORK_DISABLED)
+      .value("IBV_FORK_ENABLED", IBV_FORK_ENABLED)
+      .value("IBV_FORK_UNNEEDED", IBV_FORK_UNNEEDED)
+      .export_values();
+
   nb::enum_<ibv_atomic_cap>(m, "IBV_ATOMIC_CAP")
       .value("IBV_ATOMIC_NONE", IBV_ATOMIC_NONE)
       .value("IBV_ATOMIC_HCA", IBV_ATOMIC_HCA)
@@ -211,8 +248,7 @@ NB_MODULE(_py_adverbs, m) {
           IBV_PORT_SWITCH_PORT_STATE_TABLE_SUP)
       .value("IBV_PORT_LINK_WIDTH_2X_SUP", IBV_PORT_LINK_WIDTH_2X_SUP)
       .value("IBV_PORT_LINK_SPEED_HDR_SUP", IBV_PORT_LINK_SPEED_HDR_SUP)
-      // Hack to deal with old version of verbs.h
-      .value("IBV_PORT_LINK_SPEED_NDR_SUP", (enum ibv_port_cap_flags2)(1 << 10))
+      .value("IBV_PORT_LINK_SPEED_NDR_SUP", IBV_PORT_LINK_SPEED_NDR_SUP)
       .export_values();
 
   nb::enum_<ibv_mtu>(m, "IBV_MTU")
@@ -430,7 +466,7 @@ NB_MODULE(_py_adverbs, m) {
                 IBV_PORT_SWITCH_PORT_STATE_TABLE_SUP,
                 IBV_PORT_LINK_WIDTH_2X_SUP,
                 IBV_PORT_LINK_SPEED_HDR_SUP,
-                (1 << 10),  // IBV_PORT_LINK_SPEED_NDR_SUP
+                IBV_PORT_LINK_SPEED_NDR_SUP,
             };
             for (int f : fs) {
               if (attr.port_cap_flags2 & f) {
