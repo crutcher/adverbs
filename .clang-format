@@ -1,7 +1,18 @@
 ---
 Language : Cpp
 BasedOnStyle : google
+AlignAfterOpenBracket : AlwaysBreak
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
 BinPackParameters: false
 BinPackArguments : false
-AlignAfterOpenBracket : AlwaysBreak
+BreakAfterAttributes: Always
+BreakConstructorInitializers: BeforeColon
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+PointerAlignment: Left
+QualifierAlignment: Left
+ReflowComments: true
+SortIncludes: CaseInsensitive
+SortUsingDeclarations: true
 ...

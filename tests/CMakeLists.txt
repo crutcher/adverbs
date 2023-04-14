@@ -23,9 +23,14 @@ FetchContent_MakeAvailable(googletest)
 # > add_test(NAME example_test COMMAND example)
 # =========================================
 
-add_executable(testsuite scoped_device_list_test.cpp)
-target_link_libraries(testsuite gtest_main)
-target_link_libraries(testsuite adverbs_lib)
+add_executable(testsuite
+        scoped_device_list_test.cpp
+        context_handle_test.cpp
+        )
+target_link_libraries(testsuite
+        gtest_main
+        adverbs_lib
+        )
 
 # ??
 # add_test(NAME testsuite COMMAND example)
