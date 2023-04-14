@@ -16,7 +16,7 @@ namespace adverbs {
  *
  * Example usage:
  *
- *     scoped_device_list device_list;
+ *     adverbs::scoped_device_list device_list;
  *     for (const auto& dev : device_list) {
  *         std::cout << dev->name << std::endl;
  *     }
@@ -38,8 +38,7 @@ class scoped_device_list {
    * Calls ibv_get_device_list to populate the list of devices.
    */
   scoped_device_list()
-      : _device_list(ibv_get_device_list(&_num_devices), ibv_free_device_list) {
-  }
+      : _device_list(ibv_get_device_list(&_size), ibv_free_device_list) {}
 
   /**
    * Get a reference to the device at index i.
@@ -57,7 +56,7 @@ class scoped_device_list {
    *
    * Example:
    *
-   *     scoped_device_list device_list;
+   *     adverbs::scoped_device_list device_list;
    *     auto dev = device_list.lookup_by_name("mlx5_0");
    *     if (dev) {
    *         std::cout << dev->name << std::endl;
@@ -68,7 +67,7 @@ class scoped_device_list {
    * device exists.
    */
   [[nodiscard]]
-  struct ibv_device *const lookup_by_name(const char *name) const {
+  const struct ibv_device *lookup_by_name(const char *name) const {
     for (const auto dev : *this) {
       if (strncmp(dev->name, name, IBV_SYSFS_NAME_MAX) == 0) return dev;
     }
@@ -81,7 +80,7 @@ class scoped_device_list {
    *
    * Example:
    *
-   *     scoped_device_list device_list;
+   *     adverbs::scoped_device_list device_list;
    *     auto dev = device_list.lookup_by_name("mlx5_0");
    *     if (dev) {
    *         std::cout << dev->name << std::endl;
@@ -92,7 +91,7 @@ class scoped_device_list {
    * device exists.
    */
   [[nodiscard]]
-  struct ibv_device *const lookup_by_name(const std::string &name) const {
+  const struct ibv_device *lookup_by_name(const std::string &name) const {
     return lookup_by_name(name.c_str());
   }
 
@@ -108,16 +107,20 @@ class scoped_device_list {
    * device exists.
    */
   [[nodiscard]]
-  struct ibv_device *const lookup_by_kernel_index(int kernel_index) const {
+  const struct ibv_device *lookup_by_kernel_index(int kernel_index) const {
     for (const auto dev : *this) {
       if (ibv_get_device_index(dev) == kernel_index) return dev;
     }
-
     return nullptr;
   }
 
+  /**
+   * Get a pointer to the underlying ibv_device array.
+   *
+   * @return A pointer to the underlying ibv_device array.
+   */
   [[nodiscard]]
-  struct ibv_device *const get() const {
+  struct ibv_device *const *get() const {
     return _device_list.get();
   }
 
@@ -128,7 +131,7 @@ class scoped_device_list {
    */
   [[nodiscard]]
   size_t size() const {
-    return (size_t)_num_devices;
+    return (size_t)_size;
   }
 
   [[nodiscard]]
@@ -138,11 +141,11 @@ class scoped_device_list {
 
   [[nodiscard]]
   const_iterator end() const {
-    return _device_list.get() + _num_devices;
+    return _device_list.get() + _size;
   }
 
  private:
-  int _num_devices = 0;
+  int _size = 0;
   std::shared_ptr<struct ibv_device *> _device_list;
 };
 
@@ -151,8 +154,8 @@ class scoped_device_list {
  *
  * Example usage:
  *
- *     scoped_device_list device_list;
- *     context_handle dev(device_list[0]);
+ *     adverbs::scoped_device_list device_list;
+ *     adverbs::context_handle dev(device_list[0]);
  *     auto attr = dev.get_device_attr();
  *     std::cout << attr.max_qp << std::endl;
  */

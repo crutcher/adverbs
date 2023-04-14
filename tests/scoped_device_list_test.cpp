@@ -31,7 +31,8 @@ TEST(scoped_device_list, iterators) {
 }
 
 TEST(scoped_device_list, lookup_by_name) {
-  adverbs::scoped_device_list device_list;
+  adverbs::scoped_device_list orig;
+  adverbs::scoped_device_list device_list = orig;
 
   EXPECT_EQ(nullptr, device_list.lookup_by_name("nonexistent"));
 
