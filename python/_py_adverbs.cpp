@@ -9,6 +9,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 // This is a poorman's substitute for std::format, which is a C++20 feature.
+// nanobind currently forces C++17; so we don't have access to it here.
 template <typename... Args>
 std::string format(const std::string& format, Args... args) {
 // Shutup format warning.
@@ -29,7 +30,7 @@ std::string format(const std::string& format, Args... args) {
   // actually format
   std::snprintf(buf.get(), size, format.c_str(), args...);
 
-  // Bulid the return string.
+  // Build the return string.
   // We don't want the '\0' inside
   return std::string(buf.get(), buf.get() + size - 1);
 
@@ -134,8 +135,6 @@ static constexpr const char* __doc__ = R"""(
 NB_MODULE(_py_adverbs, m) {
   m.doc() = __doc__;
 
-  m.def("list_devices", &list_devices, "List all Infiniband devices.");
-
   nb::enum_<ibv_node_type>(m, "NodeType")
       .value("Unknown", IBV_NODE_UNKNOWN)
       .value("Ca", IBV_NODE_CA)
@@ -145,6 +144,23 @@ NB_MODULE(_py_adverbs, m) {
       .value("Usnic", IBV_NODE_USNIC)
       .value("Usnic_UDP", IBV_NODE_USNIC_UDP)
       .export_values();
+
+  nb::enum_<ibv_atomic_cap>(m, "AtomicCap")
+      .value("None", IBV_ATOMIC_NONE)
+      .value("HCA", IBV_ATOMIC_HCA)
+      .value("Glob", IBV_ATOMIC_GLOB)
+      .export_values();
+
+  nb::enum_<ibv_port_state>(m, "PortState")
+      .value("NoChange", IBV_PORT_NOP)
+      .value("Down", IBV_PORT_DOWN)
+      .value("Init", IBV_PORT_INIT)
+      .value("Armed", IBV_PORT_ARMED)
+      .value("Active", IBV_PORT_ACTIVE)
+      .value("ActiveDef", IBV_PORT_ACTIVE_DEFER)
+      .export_values();
+
+  m.def("list_devices", &list_devices, "List all Infiniband devices.");
 
   nb::class_<IBDeviceProxy>(m, "IBDevice")
       .def_ro_static("__doc__", &IBDeviceProxy::__doc__)
@@ -167,5 +183,139 @@ NB_MODULE(_py_adverbs, m) {
       .def("__str__", &IBDeviceProxy::to_string)
       .def("open", &IBDeviceProxy::open);
 
-  nb::class_<adverbs::context_handle>(m, "IBContext");
+  nb::class_<adverbs::context_handle>(m, "IBContext")
+      .def(
+          "attr",
+          &adverbs::context_handle::query_device_attr,
+          "Query the device attributes.")
+      .def(
+          "ports",
+          [](const adverbs::context_handle& ctx) { return ctx.query_ports(); },
+          "List the device ports.");
+
+  nb::class_<ibv_device_attr>(m, "IBDeviceAttr")
+      .def(
+          "__dir__",
+          [](const ibv_device_attr& attr) {
+            return std::vector<std::string>{
+                "max_mr_size",
+                "max_qp",
+                "max_qp_wr",
+                "max_sge",
+                "max_sge_rd",
+                "max_cq",
+                "max_cqe",
+                "max_mr",
+                "max_pd",
+                "max_qp_rd_atom",
+                "max_ee_rd_atom",
+                "max_res_rd_atom",
+                "max_qp_init_rd_atom",
+                "max_ee_init_rd_atom",
+                "atomic_cap",
+                "max_ee",
+                "max_rdd",
+                "max_mw",
+                "max_raw_ipv6_qp",
+                "max_raw_ethy_qp",
+                "max_mcast_grp",
+                "max_mcast_qp_attach",
+                "max_total_mcast_qp_attach",
+                "max_ah",
+                "max_fmr",
+                "max_map_per_fmr",
+                "max_srq",
+                "max_srq_wr",
+                "max_srq_sge",
+                "max_pkeys",
+                "local_ca_ack_delay",
+                "phys_port_cnt",
+                "fw_ver",
+                "node_guid",
+                "sys_image_guid",
+                "page_size_cap",
+                "vendor_id",
+                "vendor_part_id",
+            };
+          })
+      .def_ro("fw_ver", &ibv_device_attr::fw_ver)
+      .def_ro("node_guid", &ibv_device_attr::node_guid)
+      .def_ro("sys_image_guid", &ibv_device_attr::sys_image_guid)
+      .def_ro("max_mr_size", &ibv_device_attr::max_mr_size)
+      .def_ro("page_size_cap", &ibv_device_attr::page_size_cap)
+      .def_ro("vendor_id", &ibv_device_attr::vendor_id)
+      .def_ro("vendor_part_id", &ibv_device_attr::vendor_part_id)
+      .def_ro("hw_ver", &ibv_device_attr::hw_ver)
+      .def_ro("max_qp", &ibv_device_attr::max_qp)
+      .def_ro("max_qp_wr", &ibv_device_attr::max_qp_wr)
+      .def_ro("device_cap_flags", &ibv_device_attr::device_cap_flags)
+      .def_ro("max_sge", &ibv_device_attr::max_sge)
+      .def_ro("max_sge_rd", &ibv_device_attr::max_sge_rd)
+      .def_ro("max_cq", &ibv_device_attr::max_cq)
+      .def_ro("max_cqe", &ibv_device_attr::max_cqe)
+      .def_ro("max_mr", &ibv_device_attr::max_mr)
+      .def_ro("max_pd", &ibv_device_attr::max_pd)
+      .def_ro("max_qp_rd_atom", &ibv_device_attr::max_qp_rd_atom)
+      .def_ro("max_ee_rd_atom", &ibv_device_attr::max_ee_rd_atom)
+      .def_ro("max_res_rd_atom", &ibv_device_attr::max_res_rd_atom)
+      .def_ro("max_qp_init_rd_atom", &ibv_device_attr::max_qp_init_rd_atom)
+      .def_ro("max_ee_init_rd_atom", &ibv_device_attr::max_ee_init_rd_atom)
+      .def_ro("atomic_cap", &ibv_device_attr::atomic_cap)
+      .def_ro("max_ee", &ibv_device_attr::max_ee)
+      .def_ro("max_rdd", &ibv_device_attr::max_rdd)
+      .def_ro("max_mw", &ibv_device_attr::max_mw)
+      .def_ro("max_raw_ipv6_qp", &ibv_device_attr::max_raw_ipv6_qp)
+      .def_ro("max_raw_ethy_qp", &ibv_device_attr::max_raw_ethy_qp)
+      .def_ro("max_mcast_grp", &ibv_device_attr::max_mcast_grp)
+      .def_ro("max_mcast_qp_attach", &ibv_device_attr::max_mcast_qp_attach)
+      .def_ro(
+          "max_total_mcast_qp_attach",
+          &ibv_device_attr::max_total_mcast_qp_attach)
+      .def_ro("max_ah", &ibv_device_attr::max_ah)
+      .def_ro("max_fmr", &ibv_device_attr::max_fmr)
+      .def_ro("max_map_per_fmr", &ibv_device_attr::max_map_per_fmr)
+      .def_ro("max_srq", &ibv_device_attr::max_srq)
+      .def_ro("max_srq_wr", &ibv_device_attr::max_srq_wr)
+      .def_ro("max_srq_sge", &ibv_device_attr::max_srq_sge)
+      .def_ro("max_pkeys", &ibv_device_attr::max_pkeys)
+      .def_ro("local_ca_ack_delay", &ibv_device_attr::local_ca_ack_delay)
+      .def_ro("phys_port_cnt", &ibv_device_attr::phys_port_cnt);
+
+  nb::class_<ibv_port_attr>(m, "IbPortAttr")
+      .def(
+          "__dir__",
+          [](const ibv_port_attr& attr) {
+            return std::vector<std::string>{
+                "state",          "max_mtu",
+                "active_mtu",     "gid_tbl_len",
+                "port_cap_flags", "max_msg_sz",
+                "bad_pkey_cntr",  "qkey_viol_cntr",
+                "pkey_tbl_len",   "lid",
+                "sm_lid",         "lmc",
+                "max_vl_num",     "sm_sl",
+                "subnet_timeout", "init_type_reply",
+                "active_width",   "active_speed",
+                "phys_state",     "link_layer",
+            };
+          })
+      .def_ro("state", &ibv_port_attr::state)
+      .def_ro("max_mtu", &ibv_port_attr::max_mtu)
+      .def_ro("active_mtu", &ibv_port_attr::active_mtu)
+      .def_ro("gid_tbl_len", &ibv_port_attr::gid_tbl_len)
+      .def_ro("port_cap_flags", &ibv_port_attr::port_cap_flags)
+      .def_ro("max_msg_sz", &ibv_port_attr::max_msg_sz)
+      .def_ro("bad_pkey_cntr", &ibv_port_attr::bad_pkey_cntr)
+      .def_ro("qkey_viol_cntr", &ibv_port_attr::qkey_viol_cntr)
+      .def_ro("pkey_tbl_len", &ibv_port_attr::pkey_tbl_len)
+      .def_ro("lid", &ibv_port_attr::lid)
+      .def_ro("sm_lid", &ibv_port_attr::sm_lid)
+      .def_ro("lmc", &ibv_port_attr::lmc)
+      .def_ro("max_vl_num", &ibv_port_attr::max_vl_num)
+      .def_ro("sm_sl", &ibv_port_attr::sm_sl)
+      .def_ro("subnet_timeout", &ibv_port_attr::subnet_timeout)
+      .def_ro("init_type_reply", &ibv_port_attr::init_type_reply)
+      .def_ro("active_width", &ibv_port_attr::active_width)
+      .def_ro("active_speed", &ibv_port_attr::active_speed)
+      .def_ro("phys_state", &ibv_port_attr::phys_state)
+      .def_ro("link_layer", &ibv_port_attr::link_layer);
 }
