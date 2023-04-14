@@ -68,7 +68,7 @@ class scoped_device_list {
    */
   [[nodiscard]]
   const struct ibv_device *lookup_by_name(const char *name) const {
-    return lookup_by_predicate([name](const struct ibv_device *dev) {
+    return lookup_by_predicate([name](const struct ibv_device *dev) -> bool {
       return strncmp(dev->name, name, IBV_SYSFS_NAME_MAX) == 0;
     });
   }
@@ -107,10 +107,11 @@ class scoped_device_list {
    */
   [[nodiscard]]
   const struct ibv_device *lookup_by_kernel_index(int kernel_index) const {
-    return lookup_by_predicate([kernel_index](const struct ibv_device *dev) {
-      return ibv_get_device_index(const_cast<struct ibv_device *>(dev)) ==
-             kernel_index;
-    });
+    return lookup_by_predicate(
+        [kernel_index](const struct ibv_device *dev) -> bool {
+          return ibv_get_device_index(const_cast<struct ibv_device *>(dev)) ==
+                 kernel_index;
+        });
   }
 
   /**
@@ -123,7 +124,7 @@ class scoped_device_list {
    */
   [[nodiscard]]
   const struct ibv_device *lookup_by_guid(uint64_t guid) const {
-    return lookup_by_predicate([guid](const struct ibv_device *dev) {
+    return lookup_by_predicate([guid](const struct ibv_device *dev) -> bool {
       return ibv_get_device_guid(const_cast<struct ibv_device *>(dev)) == guid;
     });
   }
