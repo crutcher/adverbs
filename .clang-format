@@ -1,11 +1,11 @@
 ---
-Language : Cpp
-BasedOnStyle : google
-AlignAfterOpenBracket : AlwaysBreak
+Language: Cpp
+BasedOnStyle: google
+AlignAfterOpenBracket: AlwaysBreak
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 BinPackParameters: false
-BinPackArguments : false
+BinPackArguments: false
 BreakAfterAttributes: Always
 BreakConstructorInitializers: BeforeColon
 FixNamespaceComments: true

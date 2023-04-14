@@ -44,10 +44,10 @@ class scoped_device_list {
    * Get a reference to the device at index i.
    *
    * @param i The index of the device to return.
-   * @return A reference to the device at index i.
+   * @return A pointer to the device at index i.
    */
-  const struct ibv_device &operator[](size_t i) const {
-    return *(_device_list.get()[i]);
+  const struct ibv_device *operator[](size_t i) const {
+    return _device_list.get()[i];
   }
 
   /**
@@ -179,7 +179,7 @@ class scoped_device_list {
 
  private:
   int _size = 0;
-  std::shared_ptr<struct ibv_device *> _device_list;
+  std::shared_ptr<struct ibv_device *[]> _device_list;
 };
 
 /**

@@ -5,16 +5,14 @@
 
 TEST(scoped_device_list, iterators) {
   int ref_num_devices;
-  struct ibv_device** ref_device_list = ibv_get_device_list(&ref_num_devices);
-
-  auto ref_device_list_deleter = std::shared_ptr<struct ibv_device*[]>(
-      ref_device_list,
+  std::shared_ptr<struct ibv_device*[]> ref_device_list(
+      ibv_get_device_list(&ref_num_devices),
       ibv_free_device_list);
 
   adverbs::scoped_device_list device_list;
 
   for (int i = 0; i < device_list.size(); ++i) {
-    EXPECT_EQ(device_list[i].node_type, ref_device_list[i]->node_type);
+    EXPECT_EQ(device_list[i]->node_type, ref_device_list[i]->node_type);
   }
 
   int i = 0;
