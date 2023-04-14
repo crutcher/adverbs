@@ -36,7 +36,16 @@ std::string format(const std::string& format, Args... args) {
 #pragma GCC diagnostic pop
 }
 
-struct DeviceProxy {
+// This class is a proxy for the ibv_device struct.
+//
+// By using the proxy struct, we can avoid holding a pointer to the
+// ibv_device struct, which is not meant to be held past the lifetime of
+// the ibv_get_device_list call.
+//
+// We can open a context on the device using the kernel index, which is
+// guaranteed to be stable across ibv_get_device_list calls; and we can
+// search for the same device in the list, and open a context on it.
+struct IBDeviceProxy {
   static constexpr const char* __doc__ = R"""(
     A device represents a single Infiniband device.
 
@@ -50,30 +59,8 @@ struct DeviceProxy {
       ibdev_path: The ibdev path of the device.
   )""";
 
-  explicit DeviceProxy(const struct ibv_device* dev)
-      : kernel_index(ibv_get_device_index(const_cast<ibv_device*>(dev))),
-        guid(ibv_get_device_guid(const_cast<ibv_device*>(dev))),
-        node_type(dev->node_type),
-        name(dev->name),
-        dev_name(dev->dev_name),
-        dev_path(dev->dev_path),
-        ibdev_path(dev->ibdev_path) {}
-
   [[nodiscard]]
-  std::string to_string() const {
-    return "<DeviceProxy kernel_index=" + std::to_string(kernel_index) +
-           " guid=" + std::to_string(guid) + " node_type=\"" +
-           std::string(ibv_node_type_str(node_type)) + "\" name=\"" + name +
-           "\" dev_name=\"" + dev_name + "\" dev_path=\"" + dev_path +
-           "\" ibdev_path=\"" + ibdev_path + "\">";
-  }
-
-  friend std::ostream& operator<<(std::ostream& os, const DeviceProxy& device) {
-    return os << device.to_string();
-  }
-
-  [[nodiscard]]
-  std::vector<std::string> py_dir() const {
+  static std::vector<std::string> py_dir() {
     // sorted by name
     return {
         "dev_name",
@@ -86,30 +73,53 @@ struct DeviceProxy {
     };
   }
 
+  const int kernel_index;
+  const __be64 guid;
+  const ibv_node_type node_type;
+  const std::string name;
+  const std::string dev_name;
+  const std::string dev_path;
+  const std::string ibdev_path;
+
+  explicit IBDeviceProxy(const struct ibv_device* dev)
+      : kernel_index(ibv_get_device_index(const_cast<ibv_device*>(dev))),
+        guid(ibv_get_device_guid(const_cast<ibv_device*>(dev))),
+        node_type(dev->node_type),
+        name(dev->name),
+        dev_name(dev->dev_name),
+        dev_path(dev->dev_path),
+        ibdev_path(dev->ibdev_path) {}
+
+  [[nodiscard]]
+  std::string to_string() const {
+    return "<IBDeviceProxy kernel_index=" + std::to_string(kernel_index) +
+           " guid=" + std::to_string(guid) + " node_type=\"" +
+           std::string(ibv_node_type_str(node_type)) + "\" name=\"" + name +
+           "\" dev_name=\"" + dev_name + "\" dev_path=\"" + dev_path +
+           "\" ibdev_path=\"" + ibdev_path + "\">";
+  }
+
+  friend std::ostream& operator<<(
+      std::ostream& os,
+      const IBDeviceProxy& device) {
+    return os << device.to_string();
+  }
+
   [[nodiscard]]
   adverbs::context_handle open() const {
     adverbs::scoped_device_list device_list;
     auto* _dev = device_list.lookup_by_kernel_index(kernel_index);
     if (_dev == nullptr) {
       throw std::runtime_error(
-          format("DeviceProxy with kernel index %d not found", kernel_index));
+          format("IBDeviceProxy with kernel index %d not found", kernel_index));
     }
     return adverbs::context_handle(_dev);
   }
-
-  const int kernel_index;
-  const __be64 guid;
-
-  const ibv_node_type node_type;
-  const std::string name;
-  const std::string dev_name;
-  const std::string dev_path;
-  const std::string ibdev_path;
 };
 
-std::vector<DeviceProxy> list_devices() {
+std::vector<IBDeviceProxy> list_devices() {
   adverbs::scoped_device_list device_list;
-  std::vector<DeviceProxy> devices;
+  std::vector<IBDeviceProxy> devices;
   devices.reserve(device_list.size());
   for (auto dev : device_list) {
     devices.emplace_back(dev);
@@ -117,8 +127,12 @@ std::vector<DeviceProxy> list_devices() {
   return devices;
 }
 
+static constexpr const char* __doc__ = R"""(
+    This module provides access to the Infiniband verbs API through the adverbs library.
+)""";
+
 NB_MODULE(_py_adverbs, m) {
-  m.doc() = "Python bindings for adverbs";
+  m.doc() = __doc__;
 
   m.def("list_devices", &list_devices, "List all Infiniband devices.");
 
@@ -132,19 +146,26 @@ NB_MODULE(_py_adverbs, m) {
       .value("Usnic_UDP", IBV_NODE_USNIC_UDP)
       .export_values();
 
-  nb::class_<DeviceProxy>(m, "Device")
-      .def_ro_static("__doc__", &DeviceProxy::__doc__)
-      .def_ro("kernel_index", &DeviceProxy::kernel_index)
-      .def_ro("guid", &DeviceProxy::guid)
-      .def_ro("node_type", &DeviceProxy::node_type)
-      .def_ro("name", &DeviceProxy::name)
-      .def_ro("dev_name", &DeviceProxy::dev_name)
-      .def_ro("dev_path", &DeviceProxy::dev_path)
-      .def_ro("ibdev_path", &DeviceProxy::ibdev_path)
-      .def("__dir__", &DeviceProxy::py_dir)
-      .def("__repr__", &DeviceProxy::to_string)
-      .def("__str__", &DeviceProxy::to_string)
-      .def("open", &DeviceProxy::open);
+  nb::class_<IBDeviceProxy>(m, "IBDevice")
+      .def_ro_static("__doc__", &IBDeviceProxy::__doc__)
+      .def(
+          "__dir__",
+          [](const IBDeviceProxy& dev) -> std::vector<std::string> {
+            // .def() doesn't support static methods on objects;
+            // and we don't want to define __dir__ on the class using
+            // .def_static(); so we have this little hack.
+            return IBDeviceProxy::py_dir();
+          })
+      .def_ro("kernel_index", &IBDeviceProxy::kernel_index)
+      .def_ro("guid", &IBDeviceProxy::guid)
+      .def_ro("node_type", &IBDeviceProxy::node_type)
+      .def_ro("name", &IBDeviceProxy::name)
+      .def_ro("dev_name", &IBDeviceProxy::dev_name)
+      .def_ro("dev_path", &IBDeviceProxy::dev_path)
+      .def_ro("ibdev_path", &IBDeviceProxy::ibdev_path)
+      .def("__repr__", &IBDeviceProxy::to_string)
+      .def("__str__", &IBDeviceProxy::to_string)
+      .def("open", &IBDeviceProxy::open);
 
-  nb::class_<adverbs::context_handle>(m, "Context");
+  nb::class_<adverbs::context_handle>(m, "IBContext");
 }
