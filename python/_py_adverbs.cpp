@@ -135,29 +135,92 @@ static constexpr const char* __doc__ = R"""(
 NB_MODULE(_py_adverbs, m) {
   m.doc() = __doc__;
 
-  nb::enum_<ibv_node_type>(m, "NodeType")
-      .value("Unknown", IBV_NODE_UNKNOWN)
-      .value("Ca", IBV_NODE_CA)
-      .value("Switch", IBV_NODE_SWITCH)
-      .value("Router", IBV_NODE_ROUTER)
-      .value("Rdma", IBV_NODE_RNIC)
-      .value("Usnic", IBV_NODE_USNIC)
-      .value("Usnic_UDP", IBV_NODE_USNIC_UDP)
+  nb::enum_<ibv_gid_type>(m, "IBV_GID_TYPE")
+      .value("IBV_GID_TYPE_IB", IBV_GID_TYPE_IB)
+      .value("IBV_GID_TYPE_ROCE_V1", IBV_GID_TYPE_ROCE_V1)
+      .value("IBV_GID_TYPE_ROCE_V2", IBV_GID_TYPE_ROCE_V2)
       .export_values();
 
-  nb::enum_<ibv_atomic_cap>(m, "AtomicCap")
-      .value("None", IBV_ATOMIC_NONE)
-      .value("HCA", IBV_ATOMIC_HCA)
-      .value("Glob", IBV_ATOMIC_GLOB)
+  nb::enum_<ibv_node_type>(m, "IBV_NODE_TYPE")
+      .value("IBV_NODE_UNKNOWN", IBV_NODE_UNKNOWN)
+      .value("IBV_NODE_CA", IBV_NODE_CA)
+      .value("IBV_NODE_SWITCH", IBV_NODE_SWITCH)
+      .value("IBV_NODE_ROUTER", IBV_NODE_ROUTER)
+      .value("IBV_NODE_NRIC", IBV_NODE_RNIC)
+      .value("IBV_NODE_USNIC", IBV_NODE_USNIC)
+      .value("IBV_NODE_USNIC_UDP", IBV_NODE_USNIC_UDP)
       .export_values();
 
-  nb::enum_<ibv_port_state>(m, "PortState")
-      .value("NoChange", IBV_PORT_NOP)
-      .value("Down", IBV_PORT_DOWN)
-      .value("Init", IBV_PORT_INIT)
-      .value("Armed", IBV_PORT_ARMED)
-      .value("Active", IBV_PORT_ACTIVE)
-      .value("ActiveDef", IBV_PORT_ACTIVE_DEFER)
+  nb::enum_<ibv_transport_type>(m, "IBV_TRANSPORT_TYPE")
+      .value("IBV_TRANSPORT_UNKNOWN", IBV_TRANSPORT_UNKNOWN)
+      .value("IBV_TRANSPORT_IB", IBV_TRANSPORT_IB)
+      .value("IBV_TRANSPORT_IWARP", IBV_TRANSPORT_IWARP)
+      .value("IBV_TRANSPORT_USNIC", IBV_TRANSPORT_USNIC)
+      .value("IBV_TRANSPORT_USNIC_UDP", IBV_TRANSPORT_USNIC_UDP)
+      .export_values();
+
+  nb::enum_<ibv_atomic_cap>(m, "IBV_ATOMIC_CAP")
+      .value("IBV_ATOMIC_NONE", IBV_ATOMIC_NONE)
+      .value("IBV_ATOMIC_HCA", IBV_ATOMIC_HCA)
+      .value("IBV_ATOMIC_GLOB", IBV_ATOMIC_GLOB)
+      .export_values();
+
+  nb::enum_<ibv_port_state>(m, "IBV_PORT_STATE")
+      .value("IBV_PORT_NDP", IBV_PORT_NOP)
+      .value("IBV_PORT_DOWN", IBV_PORT_DOWN)
+      .value("IBV_PORT_INIT", IBV_PORT_INIT)
+      .value("IBV_PORT_ARMED", IBV_PORT_ARMED)
+      .value("IBV_PORT_ACTIVE", IBV_PORT_ACTIVE)
+      .value("IBV_PORT_ACTIVE_DEFER", IBV_PORT_ACTIVE_DEFER)
+      .export_values();
+
+  nb::enum_<ibv_port_cap_flags>(m, "IBV_PORT_CAP_FLAGS")
+      .value("IBV_PORT_SM", IBV_PORT_SM)
+      .value("IBV_PORT_NOTICE_SP", IBV_PORT_NOTICE_SUP)
+      .value("IBV_PORT_TRAP_SUP", IBV_PORT_TRAP_SUP)
+      .value("IBV_PORT_OPT_IPD_SUP", IBV_PORT_OPT_IPD_SUP)
+      .value("IBV_PORT_AUTO_MIGR_SUP", IBV_PORT_AUTO_MIGR_SUP)
+      .value("IBV_PORT_SL_MAP_SUP", IBV_PORT_SL_MAP_SUP)
+      .value("IBV_PORT_MKEY_NVRAM", IBV_PORT_MKEY_NVRAM)
+      .value("IBV_PORT_PKEY_NVRAM", IBV_PORT_PKEY_NVRAM)
+      .value("IBV_PORT_LED_INFO_SUP", IBV_PORT_LED_INFO_SUP)
+      .value("IBV_PORT_SYS_IMAGE_GUID_SUP", IBV_PORT_SYS_IMAGE_GUID_SUP)
+      .value(
+          "IBV_PORT_PKEY_SW_EXT_PORT_TRAP_SUP",
+          IBV_PORT_PKEY_SW_EXT_PORT_TRAP_SUP)
+      .value("IBV_PORT_EXTENDED_SPEEDS_SUP", IBV_PORT_EXTENDED_SPEEDS_SUP)
+      .value("IBV_PORT_CM_SUP", IBV_PORT_CM_SUP)
+      .value("IBV_PORT_SNMP_TUNNEL_SUP", IBV_PORT_SNMP_TUNNEL_SUP)
+      .value("IBV_PORT_REINIT_SUP", IBV_PORT_REINIT_SUP)
+      .value("IBV_PORT_DEVICE_MGMT_SUP", IBV_PORT_DEVICE_MGMT_SUP)
+      .value("IBV_PORT_VENDOR_CLASS_SUP", IBV_PORT_VENDOR_CLASS_SUP)
+      .value("IBV_PORT_DR_NOTICE_SUP", IBV_PORT_DR_NOTICE_SUP)
+      .value("IBV_PORT_CAP_MASK_NOTICE_SUP", IBV_PORT_CAP_MASK_NOTICE_SUP)
+      .value("IBV_PORT_BOOT_MGMT_SUP", IBV_PORT_BOOT_MGMT_SUP)
+      .value("IBV_PORT_LINK_LATENCY_SUP", IBV_PORT_LINK_LATENCY_SUP)
+      .value("IBV_PORT_CLIENT_REG_SUP", IBV_PORT_CLIENT_REG_SUP)
+      .value("IBV_PORT_IP_BASED_GIDS", IBV_PORT_IP_BASED_GIDS)
+      .export_values();
+
+  nb::enum_<ibv_port_cap_flags2>(m, "IBV_PORT_CAP_FLAGS2")
+      .value("IBV_PORT_SET_NODE_DESC_SUP", IBV_PORT_SET_NODE_DESC_SUP)
+      .value("IBV_PORT_INFO_EXT_SUP", IBV_PORT_INFO_EXT_SUP)
+      .value("IBV_PORT_VIRT_SUP", IBV_PORT_VIRT_SUP)
+      .value(
+          "IBV_PORT_SWITCH_PORT_STATE_TABLE_SUP",
+          IBV_PORT_SWITCH_PORT_STATE_TABLE_SUP)
+      .value("IBV_PORT_LINK_WIDTH_2X_SUP", IBV_PORT_LINK_WIDTH_2X_SUP)
+      .value("IBV_PORT_LINK_SPEED_HDR_SUP", IBV_PORT_LINK_SPEED_HDR_SUP)
+      // Hack to deal with old version of verbs.h
+      .value("IBV_PORT_LINK_SPEED_NDR_SUP", (enum ibv_port_cap_flags2)(1 << 10))
+      .export_values();
+
+  nb::enum_<ibv_mtu>(m, "IBV_MTU")
+      .value("256", IBV_MTU_256)
+      .value("512", IBV_MTU_512)
+      .value("1024", IBV_MTU_1024)
+      .value("2048", IBV_MTU_2048)
+      .value("4096", IBV_MTU_4096)
       .export_values();
 
   m.def("list_devices", &list_devices, "List all Infiniband devices.");
@@ -317,5 +380,63 @@ NB_MODULE(_py_adverbs, m) {
       .def_ro("active_width", &ibv_port_attr::active_width)
       .def_ro("active_speed", &ibv_port_attr::active_speed)
       .def_ro("phys_state", &ibv_port_attr::phys_state)
-      .def_ro("link_layer", &ibv_port_attr::link_layer);
+      .def_ro("link_layer", &ibv_port_attr::link_layer)
+      .def(
+          "expand_flags",
+          [
+          ](const ibv_port_attr& attr) -> std::vector<enum ibv_port_cap_flags> {
+            std::vector<enum ibv_port_cap_flags> flagset;
+            std::vector<int> fs = {
+                IBV_PORT_SM,
+                IBV_PORT_NOTICE_SUP,
+                IBV_PORT_TRAP_SUP,
+                IBV_PORT_OPT_IPD_SUP,
+                IBV_PORT_AUTO_MIGR_SUP,
+                IBV_PORT_SL_MAP_SUP,
+                IBV_PORT_MKEY_NVRAM,
+                IBV_PORT_PKEY_NVRAM,
+                IBV_PORT_LED_INFO_SUP,
+                IBV_PORT_SYS_IMAGE_GUID_SUP,
+                IBV_PORT_PKEY_SW_EXT_PORT_TRAP_SUP,
+                IBV_PORT_EXTENDED_SPEEDS_SUP,
+                IBV_PORT_CM_SUP,
+                IBV_PORT_SNMP_TUNNEL_SUP,
+                IBV_PORT_REINIT_SUP,
+                IBV_PORT_DEVICE_MGMT_SUP,
+                IBV_PORT_VENDOR_CLASS_SUP,
+                IBV_PORT_DR_NOTICE_SUP,
+                IBV_PORT_CAP_MASK_NOTICE_SUP,
+                IBV_PORT_BOOT_MGMT_SUP,
+                IBV_PORT_LINK_LATENCY_SUP,
+                IBV_PORT_CLIENT_REG_SUP,
+                IBV_PORT_IP_BASED_GIDS,
+            };
+            for (int f : fs) {
+              if (attr.port_cap_flags & f) {
+                flagset.push_back((enum ibv_port_cap_flags)f);
+              }
+            }
+            return flagset;
+          })
+      .def(
+          "expand_flags2",
+          [](const ibv_port_attr& attr)
+              -> std::vector<enum ibv_port_cap_flags2> {
+            std::vector<enum ibv_port_cap_flags2> flagset;
+            std::vector<int> fs = {
+                IBV_PORT_SET_NODE_DESC_SUP,
+                IBV_PORT_INFO_EXT_SUP,
+                IBV_PORT_VIRT_SUP,
+                IBV_PORT_SWITCH_PORT_STATE_TABLE_SUP,
+                IBV_PORT_LINK_WIDTH_2X_SUP,
+                IBV_PORT_LINK_SPEED_HDR_SUP,
+                (1 << 10),  // IBV_PORT_LINK_SPEED_NDR_SUP
+            };
+            for (int f : fs) {
+              if (attr.port_cap_flags2 & f) {
+                flagset.push_back((enum ibv_port_cap_flags2)f);
+              }
+            }
+            return flagset;
+          });
 }
