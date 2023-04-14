@@ -1,6 +1,7 @@
 project(python_ext)
 
 find_package(Python 3.9 COMPONENTS Interpreter Development.Module REQUIRED)
+set(CMAKE_CXX_STANDARD 20)
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -22,13 +23,13 @@ list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
 nanobind_add_module(
-        adverbs_pyext
+        _py_adverbs
         NOSTRIP
         NB_STATIC
-        adverbs_pyext.cpp
+        _py_adverbs.cpp
 )
 target_link_libraries(
-        adverbs_pyext
+        _py_adverbs
         PUBLIC
         adverbs
 )
