@@ -57,3 +57,13 @@ TEST(scoped_device_list, lookup_by_kernel_index) {
         device_list.lookup_by_kernel_index(ibv_get_device_index(dev)));
   }
 }
+
+TEST(scoped_device_list, lookup_by_guid) {
+  adverbs::scoped_device_list device_list;
+
+  EXPECT_EQ(nullptr, device_list.lookup_by_guid(-13370));
+
+  for (auto& dev : device_list) {
+    EXPECT_EQ(dev, device_list.lookup_by_guid(ibv_get_device_guid(dev)));
+  }
+}

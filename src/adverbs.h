@@ -68,10 +68,9 @@ class scoped_device_list {
    */
   [[nodiscard]]
   const struct ibv_device *lookup_by_name(const char *name) const {
-    for (const auto dev : *this) {
-      if (strncmp(dev->name, name, IBV_SYSFS_NAME_MAX) == 0) return dev;
-    }
-    return nullptr;
+    return lookup_by_predicate([name](const struct ibv_device *dev) {
+      return strncmp(dev->name, name, IBV_SYSFS_NAME_MAX) == 0;
+    });
   }
 
   /**
@@ -108,8 +107,41 @@ class scoped_device_list {
    */
   [[nodiscard]]
   const struct ibv_device *lookup_by_kernel_index(int kernel_index) const {
+    return lookup_by_predicate([kernel_index](const struct ibv_device *dev) {
+      return ibv_get_device_index(const_cast<struct ibv_device *>(dev)) ==
+             kernel_index;
+    });
+  }
+
+  /**
+   * Find an ibv_device by GUID.
+   * Returns nullptr if no device with the given GUID is found.
+   *
+   * @param guid the Globally Unique Identifier of the device to find.
+   * @return A pointer to the device with the given GUID, or nullptr if no such
+   * device exists.
+   */
+  [[nodiscard]]
+  const struct ibv_device *lookup_by_guid(uint64_t guid) const {
+    return lookup_by_predicate([guid](const struct ibv_device *dev) {
+      return ibv_get_device_guid(const_cast<struct ibv_device *>(dev)) == guid;
+    });
+  }
+
+  /**
+   * Find an ibv_device by predicate.
+   * Returns nullptr if no device matching the given predicate is found.
+   *
+   * @param predicate A function that returns true if the device matches the
+   * predicate.
+   * @return a pointer to the device that matches the predicate, or nullptr if
+   * no such device exists.
+   */
+  [[nodiscard]]
+  const struct ibv_device *lookup_by_predicate(
+      const std::function<bool(const struct ibv_device *)> &predicate) const {
     for (const auto dev : *this) {
-      if (ibv_get_device_index(dev) == kernel_index) return dev;
+      if (predicate(dev)) return dev;
     }
     return nullptr;
   }
@@ -214,7 +246,7 @@ class context_handle {
    */
   [[nodiscard]]
   std::vector<struct ibv_port_attr> query_ports(
-      std::function<bool(const struct ibv_port_attr &)> filter) const {
+      const std::function<bool(const struct ibv_port_attr &)> &filter) const {
     auto ports = query_ports();
     ports.erase(
         std::remove_if(ports.begin(), ports.end(), filter),

@@ -29,7 +29,7 @@ add_executable(testsuite
         )
 target_link_libraries(testsuite
         gtest_main
-        adverbs_lib
+        adverbs
         )
 
 # ??
